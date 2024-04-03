@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo</title>
+    <link rel="stylesheet" type="text/css" href="static/index.css">
+    <script src="static/index.js"></script>
+    <meta name="description" content="un bot per il trading su MT5">
+	<meta name="keywords" content="trading bot, MT5, MetaTrader5, python bot">
+</head>
+<body>
+    <header>
+        <div id="theme">
+            <label class="switch">
+                {%if user_option == '1'%}
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            fun();
+                        });
+                        function fun(){changeTheme();}
+                    </script>
+                    <input type="checkbox" id="changeTheme" onclick="changeTheme()" checked>
+                {%else%}
+                    <input type="checkbox" id="changeTheme" onclick="changeTheme()">
+                {%endif%}
+                <span class="slider round"></span>
+            </label>
+        </div>
+        <h1>Demo Bot</h1>
+        <nav>
+            <ul>
+                <il><a href="https://paypal.me/eghosa02?country.x=IT&locale.x=it_IT">PayPal</a></il>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <section id="download">
+            <h2>DOWNLOAD</h2>
+            <a id="button" href="/Demo.zip" download="bot">download</a>
+        </section>
+        <section id="instructions">
+            <h3>INSTRUCTIONS</h3>
+            <p>once you have downloaded the 'zip' containing the program, simply run the 'rub.bat' file and all dependencies will be automatically installed.
+                in the program folder there is a 'config.json' file where some parameters can be modified as desired and for the correct functioning of the program it will be necessary to have MetaTrader5 installed on your PC.
+                when the program starts you will be asked to enter a username and password to verify yourself, to obtain credentials you will need to specify them during payment as a comment on the transaction at the following <a href="https://paypal.me/eghosa02?country.x=IT&locale.x=it_IT">PayPal</a>.</p>
+        </section>
+        <section id="works">
+            <h3>HOW IT WORK?</h3>   
+            <p>the bot applies price action principles, chart pattern recognition, technical analysis using various indicators, sentiment analysis and a more performing fundamental analysis model than current results is being developed.</p>
+        </section>    
+    </main>
+    <footer>
+        <nav>
+            <ul>
+                <il><a href="https://github.com/eghosa02">github</a></il>
+                <il><a href="https://linkedin.com/in/eghosa-bigbi-021727269">linkedin</a></il>
+                <il><a href="mailto:robbocacco@gmail.com">contact me</a></il>
+            </ul>
+        </nav>
+    </footer>
+</body>
+</html>
