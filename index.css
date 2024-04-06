@@ -209,3 +209,17 @@ footer {
     text-align: center;
     padding: 20px 0;
 }
+
+@media screen and (max-width: 540px) {
+    main{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    #myImage img{
+        width: 250px;
+        height: auto;
+        margin: auto;
+    }
+}
