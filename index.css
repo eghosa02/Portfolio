@@ -176,32 +176,23 @@ section h2 {
     background-position: 0 -100%;
 }
 
-
 #contact .container{
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
 }
+
 .contatti-list{
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.contatti-list li {
-    margin-bottom: 10px;
-}
-
-.contatti-list li a {
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-    color: #333; 
+    flex-direction: row;
+    gap:5%;
 }
 
 .contatti-list li img {
-    margin-inline: 40px;
     width: 60px; 
     height: auto;
     border-radius: 50%;
