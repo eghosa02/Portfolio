@@ -1,12 +1,9 @@
 name: Calculate Issue Duration
 
 on:
-  workflow_dispatch:
-    inputs:
-      issue_number:
-        description: 'The issue number to track'
-        required: true
-        type: string
+  push:
+    branches:
+      - "*#*"
 
 jobs:
   calculate-time:
