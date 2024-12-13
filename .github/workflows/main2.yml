@@ -18,12 +18,25 @@ jobs:
           git config --global fetch.prune true
           git fetch --all
 
+      - name: Extract issue number from branch name
+        id: extract_issue
+        run: |
+          branch_name=${{ github.ref_name }}
+          issue_number=$(echo "$branch_name" | grep -oE '#[0-9]+' | tr -d '#')
+
+          if [ -z "$issue_number" ]; then
+            echo "Error: No issue number found in branch name."
+            exit 1
+          fi
+
+          echo "::set-output name=issue_number::$issue_number"
+
       - name: Get issue creation date
         id: issue_data
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          issue_number=${{ github.event.inputs.issue_number }}
+          issue_number=${{ steps.extract_issue.outputs.issue_number }}
           issue_data=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
             "https://api.github.com/repos/${{ github.repository }}/issues/$issue_number")
 
@@ -36,27 +49,13 @@ jobs:
 
           echo "::set-output name=created_at::$created_at"
 
-      - name: Find the branch with issue number
-        id: find_branch
-        run: |
-          issue_number=${{ github.event.inputs.issue_number }}
-          branch=$(git branch -r | grep "#${issue_number}$" | head -n 1 | awk '{print $1}')
-
-          if [ -z "$branch" ]; then
-            echo "Error: No branch found for issue #${issue_number}."
-            exit 1
-          fi
-
-          echo "::set-output name=branch::$branch"
-
       - name: Get last commit date on branch
         id: commit_date
         run: |
-          branch=${{ steps.find_branch.outputs.branch }}
-          last_commit_date=$(git log -1 --format="%ci" "$branch")
+          last_commit_date=$(git log -1 --format="%ci" "${{ github.ref_name }}")
 
           if [ -z "$last_commit_date" ]; then
-            echo "Error: No commits found on branch $branch."
+            echo "Error: No commits found on branch ${{ github.ref_name }}."
             exit 1
           fi
 
