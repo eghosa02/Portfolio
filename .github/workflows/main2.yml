@@ -1,0 +1,87 @@
+name: Calculate Issue Duration
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'The issue number to track'
+        required: true
+        type: string
+
+jobs:
+  calculate-time:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Git
+        run: |
+          git config --global fetch.prune true
+          git fetch --all
+
+      - name: Get issue creation date
+        id: issue_data
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          issue_number=${{ github.event.inputs.issue_number }}
+          issue_data=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/issues/$issue_number")
+
+          created_at=$(echo "$issue_data" | jq -r '.created_at')
+
+          if [ "$created_at" = "null" ]; then
+            echo "Error: Issue not found."
+            exit 1
+          fi
+
+          echo "::set-output name=created_at::$created_at"
+
+      - name: Find the branch with issue number
+        id: find_branch
+        run: |
+          issue_number=${{ github.event.inputs.issue_number }}
+          branch=$(git branch -r | grep "#${issue_number}$" | head -n 1 | awk '{print $1}')
+
+          if [ -z "$branch" ]; then
+            echo "Error: No branch found for issue #${issue_number}."
+            exit 1
+          fi
+
+          echo "::set-output name=branch::$branch"
+
+      - name: Get last commit date on branch
+        id: commit_date
+        run: |
+          branch=${{ steps.find_branch.outputs.branch }}
+          last_commit_date=$(git log -1 --format="%ci" "$branch")
+
+          if [ -z "$last_commit_date" ]; then
+            echo "Error: No commits found on branch $branch."
+            exit 1
+          fi
+
+          echo "::set-output name=last_commit_date::$last_commit_date"
+
+      - name: Calculate time difference
+        run: |
+          created_at=${{ steps.issue_data.outputs.created_at }}
+          last_commit_date=${{ steps.commit_date.outputs.last_commit_date }}
+
+          start=$(date -u -d "$created_at" +%s)
+          end=$(date -u -d "$last_commit_date" +%s)
+
+          elapsed=$((end - start))
+          days=$((elapsed / 86400))
+          hours=$(( (elapsed % 86400) / 3600 ))
+          minutes=$(( (elapsed % 3600) / 60 ))
+
+          echo "Time from issue creation to last commit: $days days, $hours hours, $minutes minutes."
+
+          echo "::set-output name=elapsed_time::$days days, $hours hours, $minutes minutes."
+
+      - name: Output result
+        run: |
+          echo "Elapsed time: ${{ steps.calculate_time.outputs.elapsed_time }}"
