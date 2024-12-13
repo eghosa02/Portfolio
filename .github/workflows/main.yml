@@ -1,0 +1,63 @@
+name: Calculate Time Between Issue and Pull Request
+
+on:
+  pull_request:
+    types:
+      - opened
+
+jobs:
+  calculate-time:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Get Pull Request Data
+        id: pr_data
+        run: |
+          echo "::set-output name=pr_body::$(jq -r '.pull_request.body' $GITHUB_EVENT_PATH)"
+          echo "::set-output name=pr_created_at::$(jq -r '.pull_request.created_at' $GITHUB_EVENT_PATH)"
+
+      - name: Extract Issue ID
+        id: extract_issue_id
+        run: |
+          ISSUE_ID=$(echo "${{ steps.pr_data.outputs.pr_body }}" | grep -oP '(?<=closes #)\d+')
+          echo "::set-output name=issue_id::$ISSUE_ID"
+
+      - name: Fetch Issue Data
+        id: issue_data
+        run: |
+          if [ -z "${{ steps.extract_issue_id.outputs.issue_id }}" ]; then
+            echo "No issue linked. Skipping."
+            exit 0
+          fi
+          curl -s \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/issues/${{ steps.extract_issue_id.outputs.issue_id }}" > issue.json
+          ISSUE_CREATED_AT=$(jq -r '.created_at' issue.json)
+          echo "::set-output name=issue_created_at::$ISSUE_CREATED_AT"
+
+      - name: Calculate Time Difference
+        id: time_difference
+        run: |
+          if [ -z "${{ steps.issue_data.outputs.issue_created_at }}" ]; then
+            echo "No issue created date available. Skipping."
+            exit 0
+          fi
+          ISSUE_CREATED_AT="${{ steps.issue_data.outputs.issue_created_at }}"
+          PR_CREATED_AT="${{ steps.pr_data.outputs.pr_created_at }}"
+          ISSUE_TIMESTAMP=$(date -d "$ISSUE_CREATED_AT" +%s)
+          PR_TIMESTAMP=$(date -d "$PR_CREATED_AT" +%s)
+          TIME_DIFF=$((PR_TIMESTAMP - ISSUE_TIMESTAMP))
+          echo "::set-output name=time_difference_seconds::$TIME_DIFF"
+
+      - name: Output Time Difference
+        run: |
+          if [ -z "${{ steps.time_difference.outputs.time_difference_seconds }}" ]; then
+            echo "Time difference could not be calculated."
+            exit 0
+          fi
+          SECONDS=${{ steps.time_difference.outputs.time_difference_seconds }}
+          echo "Time elapsed between issue and pull request: $SECONDS seconds."
