@@ -1,4 +1,4 @@
-name: Calculate Time Between Issue and Pull Request
+name: Calculate Time Since Issue Assignment
 
 on:
   pull_request:
@@ -25,8 +25,8 @@ jobs:
           ISSUE_ID=$(echo "${{ steps.pr_data.outputs.pr_body }}" | grep -oP '(?<=closes #)\d+')
           echo "::set-output name=issue_id::$ISSUE_ID"
 
-      - name: Fetch Issue Data
-        id: issue_data
+      - name: Fetch Issue Assignment Event
+        id: issue_assignment
         run: |
           if [ -z "${{ steps.extract_issue_id.outputs.issue_id }}" ]; then
             echo "No issue linked. Skipping."
@@ -35,22 +35,32 @@ jobs:
           curl -s \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${{ github.repository }}/issues/${{ steps.extract_issue_id.outputs.issue_id }}" > issue.json
-          ISSUE_CREATED_AT=$(jq -r '.created_at' issue.json)
-          echo "::set-output name=issue_created_at::$ISSUE_CREATED_AT"
+            "https://api.github.com/repos/${{ github.repository }}/issues/${{ steps.extract_issue_id.outputs.issue_id }}/events" > events.json
+          
+          # Trova il primo evento "assigned"
+          ASSIGNED_AT=$(jq -r '[.[] | select(.event == "assigned")] | first | .created_at // empty' events.json)
+          
+          if [ -z "$ASSIGNED_AT" ]; then
+            echo "No assignment event found. Skipping."
+            exit 0
+          fi
+
+          echo "::set-output name=assigned_at::$ASSIGNED_AT"
 
       - name: Calculate Time Difference
         id: time_difference
         run: |
-          if [ -z "${{ steps.issue_data.outputs.issue_created_at }}" ]; then
-            echo "No issue created date available. Skipping."
+          if [ -z "${{ steps.issue_assignment.outputs.assigned_at }}" ]; then
+            echo "No assignment date available. Skipping."
             exit 0
           fi
-          ISSUE_CREATED_AT="${{ steps.issue_data.outputs.issue_created_at }}"
+          ASSIGNED_AT="${{ steps.issue_assignment.outputs.assigned_at }}"
           PR_CREATED_AT="${{ steps.pr_data.outputs.pr_created_at }}"
-          ISSUE_TIMESTAMP=$(date -d "$ISSUE_CREATED_AT" +%s)
+
+          ASSIGNED_TIMESTAMP=$(date -d "$ASSIGNED_AT" +%s)
           PR_TIMESTAMP=$(date -d "$PR_CREATED_AT" +%s)
-          TIME_DIFF=$((PR_TIMESTAMP - ISSUE_TIMESTAMP))
+
+          TIME_DIFF=$((PR_TIMESTAMP - ASSIGNED_TIMESTAMP))
           echo "::set-output name=time_difference_seconds::$TIME_DIFF"
 
       - name: Output Time Difference
@@ -60,4 +70,4 @@ jobs:
             exit 0
           fi
           SECONDS=${{ steps.time_difference.outputs.time_difference_seconds }}
-          echo "Time elapsed between issue and pull request: $SECONDS seconds."
+          echo "Time elapsed since issue was assigned to pull request creation: $SECONDS seconds."
