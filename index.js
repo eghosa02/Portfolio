@@ -1,5 +1,5 @@
-const { google } = require('googleapis');
-const { Octokit } = require('@octokit/rest');
+import { google } from 'googleapis';
+import { Octokit } from '@octokit/rest';
 
 // Initialize Octokit
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
