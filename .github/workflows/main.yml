@@ -148,7 +148,7 @@ jobs:
             range,
             valueInputOption: 'RAW',
             requestBody: {
-              values: [[timeDifference]]
+              values: [[timeSpent]]
             }
           });
 
