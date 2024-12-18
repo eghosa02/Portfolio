@@ -19,7 +19,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        npm install googleapis
+        npm install googleapis @octokit/rest
 
     - name: Calculate time difference and update Google Sheets
       env:
