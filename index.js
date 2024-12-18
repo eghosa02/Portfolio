@@ -72,7 +72,7 @@ const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
 
     // Get today's date in DD-MM-YYYY format
     const today = new Date();
-    const dateString = today.getTime();
+    const todayTimestamp = today.getTime();
 
     // Update Google Sheets
     const sheetResponse = await sheets.spreadsheets.values.get({
