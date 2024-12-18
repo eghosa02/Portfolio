@@ -124,7 +124,7 @@ const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
     }
     });
 
-    console.log(`Aggiornato il foglio con la differenza di ${timeDifference} ore per il ruolo ${role} alla data ${dateString}.`);
+    console.log(`Aggiornato il foglio con la differenza di ${timeDifference} ore per il ruolo ${role} alla data ${todayTimestamp}.`);
 })().catch(error => {
     console.error(error);
     process.exit(1);
