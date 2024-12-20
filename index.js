@@ -64,29 +64,34 @@ const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
         }
         const idealTime = parseInt(idealTimeMatch[1], 10);
 
-        // Recupera il nome dello sprint dall'iterazione
-        const projectItemsResponse = await octokit.graphql(`
-            query ($repoOwner: String!, $repoName: String!, $issueId: Int!) {
-                repository(owner: $repoOwner, name: $repoName) {
-                    issue(number: $issueId) {
-                        projectItems(first: 10) {
-                            nodes {
-                                project {
-                                    title
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        `, {
-            repoOwner,
-            repoName,
-            issueId
+        // Recupera il nome dello sprint dai Projects
+        const projects = await octokit.projects.listForRepo({
+            owner: repoOwner,
+            repo: repoName
         });
 
-        const projectNodes = projectItemsResponse.repository.issue.projectItems.nodes;
-        const sprintName = projectNodes.length > 0 ? projectNodes[0].project.title : 'Nessuno sprint';
+        let sprintName = 'Nessuno sprint';
+
+        for (const project of projects.data) {
+            const columns = await octokit.projects.listColumns({
+                project_id: project.id
+            });
+
+            for (const column of columns.data) {
+                const cards = await octokit.projects.listCards({
+                    column_id: column.id
+                });
+
+                const card = cards.data.find(c => c.content_url && c.content_url.includes(`/issues/${issueId}`));
+
+                if (card) {
+                    sprintName = project.name;
+                    break;
+                }
+            }
+
+            if (sprintName !== 'Nessuno sprint') break;
+        }
 
         // Recupera il contenuto del foglio
         const sheetResponse = await sheets.spreadsheets.values.get({
@@ -96,24 +101,47 @@ const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
 
         const rows = sheetResponse.data.values || [];
 
-        // Trova la prima riga vuota
-        const emptyRowIndex = rows.findIndex(row => row.every(cell => cell === ''));
-        const targetRowIndex = emptyRowIndex === -1 ? rows.length : emptyRowIndex;
+        // Cerca una riga con lo stesso ID della issue
+        let rowIndexToUpdate = -1;
+        for (let i = 0; i < rows.length; i++) {
+            if (rows[i][1] === `#${issueId}`) {
+                rowIndexToUpdate = i;
+                break;
+            }
+        }
 
-        // Compila i dati nella riga
         const newRow = [sprintName, `#${issueId}`, role, idealTime, timeSpent];
 
-        const range = `Sheet1!A${targetRowIndex + 1}:E${targetRowIndex + 1}`;
-        await sheets.spreadsheets.values.update({
-            spreadsheetId,
-            range,
-            valueInputOption: 'RAW',
-            requestBody: {
-                values: [newRow]
-            }
-        });
+        if (rowIndexToUpdate !== -1) {
+            // Aggiorna la riga esistente
+            const range = `Sheet1!A${rowIndexToUpdate + 1}:E${rowIndexToUpdate + 1}`;
+            await sheets.spreadsheets.values.update({
+                spreadsheetId,
+                range,
+                valueInputOption: 'RAW',
+                requestBody: {
+                    values: [newRow]
+                }
+            });
 
-        console.log(`Dati aggiornati con successo nella riga ${targetRowIndex + 1}.`);
+            console.log(`Dati aggiornati nella riga ${rowIndexToUpdate + 1}.`);
+        } else {
+            // Aggiunge una nuova riga
+            const emptyRowIndex = rows.findIndex(row => row.every(cell => cell === ''));
+            const targetRowIndex = emptyRowIndex === -1 ? rows.length : emptyRowIndex;
+
+            const range = `Sheet1!A${targetRowIndex + 1}:E${targetRowIndex + 1}`;
+            await sheets.spreadsheets.values.update({
+                spreadsheetId,
+                range,
+                valueInputOption: 'RAW',
+                requestBody: {
+                    values: [newRow]
+                }
+            });
+
+            console.log(`Dati aggiunti nella riga ${targetRowIndex + 1}.`);
+        }
     } catch (error) {
         console.error(error);
         process.exit(1);
