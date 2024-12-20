@@ -64,35 +64,29 @@ const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
         }
         const idealTime = parseInt(idealTimeMatch[1], 10);
 
-        // Recupera il nome dello sprint dai Projects
-        const projectCardsResponse = await octokit.projects.listForRepo({
-            owner: repoOwner,
-            repo: repoName
-        });
-
-        const projectCards = projectCardsResponse.data;
-        let sprintName = 'Nessuno sprint';
-
-        for (const project of projectCards) {
-            const columnsResponse = await octokit.projects.listColumns({
-                project_id: project.id
-            });
-
-            for (const column of columnsResponse.data) {
-                const cardsResponse = await octokit.projects.listCards({
-                    column_id: column.id
-                });
-
-                const card = cardsResponse.data.find(c => c.content_url && c.content_url.includes(`/issues/${issueId}`));
-
-                if (card) {
-                    sprintName = project.name;
-                    break;
+        // Recupera il nome dello sprint dall'iterazione
+        const projectItemsResponse = await octokit.graphql(`
+            query ($repoOwner: String!, $repoName: String!, $issueId: Int!) {
+                repository(owner: $repoOwner, name: $repoName) {
+                    issue(number: $issueId) {
+                        projectItems(first: 10) {
+                            nodes {
+                                project {
+                                    title
+                                }
+                            }
+                        }
+                    }
                 }
             }
+        `, {
+            repoOwner,
+            repoName,
+            issueId
+        });
 
-            if (sprintName !== 'Nessuno sprint') break;
-        }
+        const projectNodes = projectItemsResponse.repository.issue.projectItems.nodes;
+        const sprintName = projectNodes.length > 0 ? projectNodes[0].project.title : 'Nessuno sprint';
 
         // Recupera il contenuto del foglio
         const sheetResponse = await sheets.spreadsheets.values.get({
