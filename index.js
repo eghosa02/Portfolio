@@ -131,10 +131,8 @@ async function getProjectId() {
 
         let sprintName = 'Nessuno sprint';
         const project = data.node.fields.nodes;
-
-        console.log(`Progetto: ${project.title}`);
     
-        for (const field of project.fields.nodes) {
+        for (const field of project) {
             if (field.configuration && field.configuration.iterations) {
                 for (const iteration of field.configuration.iterations) {
                     console.log(`Iterazione trovata: ${iteration.title}`);
