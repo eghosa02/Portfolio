@@ -19,7 +19,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        npm install googleapis @octokit/rest
+        npm install googleapis @octokit/rest graphql-request
 
     - name: Calculate time difference and update Google Sheets
       env:
