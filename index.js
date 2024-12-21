@@ -71,26 +71,39 @@ const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
         });
 
         let sprintName = 'Nessuno sprint';
-
-        for (const project of projects.data) {
-            const columns = await octokit.projects.listColumns({
-                project_id: project.id
-            });
-
-            for (const column of columns.data) {
-                const cards = await octokit.projects.listCards({
-                    column_id: column.id
+        try {
+            for (const project of projects.data) {
+                const columns = await octokit.projects.listColumns({
+                    project_id: project.id
                 });
+                console.log(`Progetto: ${project.name}`);
+                console.log(`Colonne:`, columns.data);
 
-                const card = cards.data.find(c => c.content_url && c.content_url.includes(`/issues/${issueId}`));
+                for (const column of columns.data) {
+                    try{
+                        console.log(`Verifico colonna: ${column.name}`);
+                        const cards = await octokit.projects.listCards({
+                            column_id: column.id
+                        });
+                        console.log("CARDS DATA");
+                        const card = cards.data.find(c => c.content_url && c.content_url.includes(`/issues/${issueId}`));
+                        console.log(card.content_url)
+                        console.log(cards.data);
+                        
 
-                if (card) {
-                    sprintName = project.name;
-                    break;
+                        if (card) {
+                            sprintName = project.name;
+                            break;
+                        }
+                    } catch (err) {
+                        console.error(`Errore nel recuperare le card della colonna ${column.name}:`, err);
+                    }
                 }
-            }
 
-            if (sprintName !== 'Nessuno sprint') break;
+                if (sprintName !== 'Nessuno sprint') break;
+            } 
+        } catch (err) {
+            console.error(`Errore nel recuperare le colonne del progetto ${project.name}:`, err);
         }
 
         // Recupera il contenuto del foglio
