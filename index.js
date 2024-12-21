@@ -31,12 +31,41 @@ query($owner: String!, $repo: String!) {
             nodes {
                 id
                 title
+                fields(first: 100) {
+                    nodes {
+                        id
+                        name
+                        dataType
+                        ... on ProjectV2IterationField {
+                            configuration {
+                                iterations {
+                                    id
+                                    title
+                                }
+                            }
+                        }
+                    }
+                }
                 items(first: 100) {
                     nodes {
+                        id
                         content {
                             ... on Issue {
                                 id
                                 url
+                            }
+                        }
+                        fieldValues(first: 100) {
+                            nodes {
+                                field {
+                                    ... on ProjectV2IterationField {
+                                        name
+                                    }
+                                }
+                                ... on ProjectV2ItemFieldIterationValue {
+                                    iterationId
+                                    title
+                                }
                             }
                         }
                     }
@@ -45,8 +74,6 @@ query($owner: String!, $repo: String!) {
         }
     }
 }
-
-
 `;
 
 (async () => {
@@ -108,18 +135,22 @@ query($owner: String!, $repo: String!) {
 
         let sprintName = 'Nessuno sprint';
 
-        // Analizza i progetti e le colonne per trovare quella associata all'issue
         for (const project of data.repository.projectsV2.nodes) {
-            console.log(`Progetto: ${project.name}`);
+            console.log(`Progetto: ${project.title}`);
 
             for (const item of project.items.nodes) {
                 const cardIssue = item.content;
                 if (cardIssue && cardIssue.url && cardIssue.url.includes(`/issues/${issueId}`)) {
-                    sprintName = project.title;
+                    for (const fieldValue of item.fieldValues.nodes) {
+                        if (fieldValue.field && fieldValue.field.name === 'Iteration') {
+                            sprintName = fieldValue.title;
+                            break;
+                        }
+                    }
                     break;
                 }
             }
-            if (sprintName !== 'Nessuno sprint') break;
+            if (sprintName !== 'Nessuna iterazione') break;
         }
 
         // Recupera il contenuto del foglio
