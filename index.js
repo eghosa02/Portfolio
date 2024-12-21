@@ -64,14 +64,18 @@ const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
         }
         const idealTime = parseInt(idealTimeMatch[1], 10);
 
+        console.log("Recupero la lista dei progetti...");
+
         // Recupera il nome dello sprint dai Projects
         const projects = await octokit.projects.listForRepo({
             owner: repoOwner,
             repo: repoName
         });
 
+        console.log("Progetti trovati:", projects.data);
+
         let sprintName = 'Nessuno sprint';
-        console.log("Recupero la lista dei progetti...");
+        
         try {
             for (const project of projects.data) {
                 const columns = await octokit.projects.listColumns({
@@ -109,7 +113,6 @@ const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
             console.error(`Errore nel recuperare le colonne del progetto ${project.name}:`, err);
         }
 
-        console.log("Progetti trovati:", projects.data);
         // Recupera il contenuto del foglio
         const sheetResponse = await sheets.spreadsheets.values.get({
             spreadsheetId,
