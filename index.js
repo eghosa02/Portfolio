@@ -58,6 +58,7 @@ query($owner: String!, $repo: String!) {
                         fieldValues(first: 100) {
                             nodes {
                                 field {
+                                    name
                                     ... on ProjectV2IterationField {
                                         name
                                     }
@@ -74,6 +75,7 @@ query($owner: String!, $repo: String!) {
         }
     }
 }
+
 `;
 
 (async () => {
