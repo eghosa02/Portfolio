@@ -26,26 +26,19 @@ const graphQLClient = new GraphQLClient('https://api.github.com/graphql', {
 
 const GET_PROJECTS_QUERY = gql`
 query($owner: String!, $repo: String!) {
-  repository(owner: $owner, name: $repo) {
-    projectsV2(first: 100) {
-      nodes {
-        id
-        title
-        items(first: 100) {
-          nodes {
-            id
-            content {
-              ... on Issue {
+    repository(owner: $owner, name: $repo) {
+        projectsV2(first: 100) {
+            nodes {
                 id
-                url
-              }
+                title
+                items(first: 1) {
+                    totalCount
+                }
             }
-          }
         }
-      }
     }
-  }
 }
+
 `;
 
 (async () => {
