@@ -31,13 +31,21 @@ query($owner: String!, $repo: String!) {
             nodes {
                 id
                 title
-                items(first: 1) {
-                    totalCount
+                items(first: 100) {
+                    nodes {
+                        content {
+                            ... on Issue {
+                                id
+                                url
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 }
+
 
 `;
 
@@ -96,6 +104,7 @@ query($owner: String!, $repo: String!) {
             owner: repoOwner,
             repo: repoName
         });
+        console.log(JSON.stringify(data, null, 2));
 
         let sprintName = 'Nessuno sprint';
 
@@ -103,7 +112,7 @@ query($owner: String!, $repo: String!) {
         for (const project of data.repository.projectsV2.nodes) {
             console.log(`Progetto: ${project.name}`);
 
-            for (const column of project.items.nodes) {
+            for (const item of project.items.nodes) {
                 const cardIssue = item.content;
                 if (cardIssue && cardIssue.url && cardIssue.url.includes(`/issues/${issueId}`)) {
                     sprintName = project.title;
