@@ -30,7 +30,7 @@ const GET_PROJECTS_QUERY = gql`
       projectsV2(first: 100) {
         nodes {
           id
-          name
+          title
           columns(first: 100) {
             nodes {
               id
