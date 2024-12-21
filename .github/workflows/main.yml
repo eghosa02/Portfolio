@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, edited]
 
+permissions:
+  projects: read
+  contents: read
+
 jobs:
   calculate-time-difference:
     runs-on: ubuntu-latest
@@ -25,4 +29,5 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        ACTIONS_STEP_DEBUG: true
       run: node index.js
