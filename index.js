@@ -26,67 +26,36 @@ const graphQLClient = new GraphQLClient('https://api.github.com/graphql', {
 
 const GET_PROJECTS_QUERY = gql`
 query($owner: String!, $repo: String!) {
-    repository(owner: $owner, name: $repo) {
-        projectsV2(first: 100) {
-            nodes {
+   node(id: 1) {
+    ... on ProjectV2 {
+      fields(first: 20) {
+        nodes {
+          ... on ProjectV2Field {
+            id
+            name
+          }
+          ... on ProjectV2IterationField {
+            id
+            name
+            configuration {
+              iterations {
+                startDate
                 id
-                title
-                fields(first: 100) {
-                    nodes {
-                        ... on ProjectV2IterationField {
-                            id
-                            name
-                            configuration {
-                                iterations {
-                                    id
-                                    title
-                                }
-                            }
-                        }
-                        ... on ProjectV2SingleSelectField {
-                            id
-                            name
-                            options {
-                                id
-                                name
-                            }
-                        }
-                    }
-                }
-                items(first: 100) {
-                    nodes {
-                        id
-                        content {
-                            ... on Issue {
-                                id
-                                url
-                            }
-                        }
-                        fieldValues(first: 100) {
-                            nodes {
-                                field {
-                                    ... on ProjectV2IterationField {
-                                        name
-                                    }
-                                    ... on ProjectV2SingleSelectField {
-                                        name
-                                    }
-                                }
-                                ... on ProjectV2ItemFieldIterationValue {
-                                    iterationId
-                                    title
-                                }
-                                ... on ProjectV2ItemFieldSingleSelectValue {
-                                    optionId
-                                    name
-                                }
-                            }
-                        }
-                    }
-                }
+              }
             }
+          }
+          ... on ProjectV2SingleSelectField {
+            id
+            name
+            options {
+              id
+              name
+            }
+          }
         }
+      }
     }
+  }
 }
 `;
 
@@ -151,20 +120,28 @@ query($owner: String!, $repo: String!) {
 
         for (const project of data.repository.projectsV2.nodes) {
             console.log(`Progetto: ${project.title}`);
-
-            for (const item of project.items.nodes) {
-                const cardIssue = item.content;
-                if (cardIssue && cardIssue.url && cardIssue.url.includes(`/issues/${issueId}`)) {
-                    for (const fieldValue of item.fieldValues.nodes) {
-                        if (fieldValue.field && fieldValue.field.name === 'Iteration') {
-                            sprintName = fieldValue.title;
-                            break;
+        
+            // Ciclo attraverso i campi del progetto
+            for (const field of project.fields.nodes) {
+                if (field.configuration && field.configuration.iterations) {
+                    // Ciclo attraverso le iterazioni del campo di tipo IterationField
+                    for (const iteration of field.configuration.iterations) {
+                        console.log(`Iterazione trovata: ${iteration.title}`);
+        
+                        // Associare la sprint/iterazione alla issue se è presente
+                        if (iteration.id) {
+                            sprintName = iteration.title;
+                            break; // Uscire dal ciclo quando troviamo l'iterazione
                         }
                     }
-                    break;
                 }
+        
+                // Se troviamo un nome di sprint, usciamo dal ciclo del progetto
+                if (sprintName !== 'Nessuno sprint') break;
             }
-            if (sprintName !== 'Nessuna iterazione') break;
+        
+            // Se un sprint è stato trovato, esci dal ciclo dei progetti
+            if (sprintName !== 'Nessuno sprint') break;
         }
 
         // Recupera il contenuto del foglio
