@@ -25,7 +25,7 @@ const graphQLClient = new GraphQLClient('https://api.github.com/graphql', {
 });
 
 const GET_PROJECTS_QUERY = gql`
-query($owner: String!, $repo: String!) {
+query{
    node(id: 1) {
     ... on ProjectV2 {
       fields(first: 20) {
