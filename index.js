@@ -24,9 +24,16 @@ const graphQLClient = new GraphQLClient('https://api.github.com/graphql', {
   }
 });
 
+const GET_PROJECT_ID_QUERY = gql`
+query {
+  projectV2(number: 1) {
+    id
+  }
+}`;
+
 const GET_PROJECTS_QUERY = gql`
-query{
-   node(id: 1) {
+query($projectId: ID!){
+   node(id: $projectId) {
     ... on ProjectV2 {
       fields(first: 20) {
         nodes {
@@ -58,6 +65,11 @@ query{
   }
 }
 `;
+
+async function getProjectId() {
+    const data = await graphQLClient.request(GET_PROJECT_ID_QUERY);
+    return data.projectV2.id; // Restituisci l'ID del progetto
+}
 
 (async () => {
     try {
@@ -109,15 +121,12 @@ query{
 
         console.log("Recupero la lista dei progetti...", repoOwner, repoName, prNumber);
 
-        // Recupera il nome dello sprint dai Projects usando GraphQL
-        const data = await graphQLClient.request(GET_PROJECTS_QUERY, {
-            owner: repoOwner,
-            repo: repoName
-        });
+        const projectId = await getProjectId();
+        const data = await graphQLClient.request(GET_PROJECTS_QUERY, {projectId});
         console.log(JSON.stringify(data, null, 2));
 
         let sprintName = 'Nessuno sprint';
-        const project = data.repository.projectsV2.nodes[0];
+        const project = data.repository.projectsV2.nodes;
 
         console.log(`Progetto: ${project.title}`);
     
