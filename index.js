@@ -126,7 +126,7 @@ async function getProjectId() {
         console.log(JSON.stringify(data, null, 2));
 
         let sprintName = 'Nessuno sprint';
-        const project = data.repository.projectsV2.nodes;
+        const project = data.node.fields.nodes;
 
         console.log(`Progetto: ${project.title}`);
     
