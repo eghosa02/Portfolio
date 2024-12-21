@@ -8,10 +8,6 @@ jobs:
   calculate-time-difference:
     runs-on: ubuntu-latest
 
-    permissions: # Definisci i permessi a livello del job
-      projects: read
-      contents: read
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
