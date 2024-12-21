@@ -23,7 +23,7 @@ jobs:
 
     - name: Calculate time difference and update Google Sheets
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         ACTIONS_STEP_DEBUG: true
       run: node index.js
