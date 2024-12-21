@@ -71,6 +71,7 @@ const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
         });
 
         let sprintName = 'Nessuno sprint';
+        console.log("Recupero la lista dei progetti...");
         try {
             for (const project of projects.data) {
                 const columns = await octokit.projects.listColumns({
@@ -87,7 +88,7 @@ const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
                         });
                         console.log("CARDS DATA");
                         const card = cards.data.find(c => c.content_url && c.content_url.includes(`/issues/${issueId}`));
-                        console.log(card.content_url)
+                        console.log(card.content_url);
                         console.log(cards.data);
                         
 
@@ -96,6 +97,7 @@ const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
                             break;
                         }
                     } catch (err) {
+                        console.log(`Errore nel recuperare le card della colonna ${column.name}:`);
                         console.error(`Errore nel recuperare le card della colonna ${column.name}:`, err);
                     }
                 }
@@ -103,9 +105,11 @@ const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
                 if (sprintName !== 'Nessuno sprint') break;
             } 
         } catch (err) {
+            console.log(`Errore nel recuperare le colonne del progetto ${project.name}:`);
             console.error(`Errore nel recuperare le colonne del progetto ${project.name}:`, err);
         }
 
+        console.log("Progetti trovati:", projects.data);
         // Recupera il contenuto del foglio
         const sheetResponse = await sheets.spreadsheets.values.get({
             spreadsheetId,
