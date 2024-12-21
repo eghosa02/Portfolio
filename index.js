@@ -33,10 +33,9 @@ query($owner: String!, $repo: String!) {
                 title
                 fields(first: 100) {
                     nodes {
-                        id
-                        name
-                        dataType
                         ... on ProjectV2IterationField {
+                            id
+                            name
                             configuration {
                                 iterations {
                                     id
@@ -45,6 +44,8 @@ query($owner: String!, $repo: String!) {
                             }
                         }
                         ... on ProjectV2SingleSelectField {
+                            id
+                            name
                             options {
                                 id
                                 name
@@ -64,8 +65,10 @@ query($owner: String!, $repo: String!) {
                         fieldValues(first: 100) {
                             nodes {
                                 field {
-                                    name
                                     ... on ProjectV2IterationField {
+                                        name
+                                    }
+                                    ... on ProjectV2SingleSelectField {
                                         name
                                     }
                                 }
@@ -85,8 +88,6 @@ query($owner: String!, $repo: String!) {
         }
     }
 }
-
-
 `;
 
 (async () => {
