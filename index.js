@@ -44,6 +44,12 @@ query($owner: String!, $repo: String!) {
                                 }
                             }
                         }
+                        ... on ProjectV2SingleSelectField {
+                            options {
+                                id
+                                name
+                            }
+                        }
                     }
                 }
                 items(first: 100) {
@@ -67,6 +73,10 @@ query($owner: String!, $repo: String!) {
                                     iterationId
                                     title
                                 }
+                                ... on ProjectV2ItemFieldSingleSelectValue {
+                                    optionId
+                                    name
+                                }
                             }
                         }
                     }
@@ -75,6 +85,7 @@ query($owner: String!, $repo: String!) {
         }
     }
 }
+
 
 `;
 
