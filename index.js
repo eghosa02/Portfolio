@@ -1,5 +1,6 @@
 import { google } from 'googleapis';
 import { Octokit } from '@octokit/rest';
+import { GraphQLClient, gql } from 'graphql-request';
 
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
@@ -15,6 +16,43 @@ const spreadsheetId = '1YdCcHmGOKrHJed4brXRxZ2T4DiDjqDqqdRGoSWvhQ54'; // ID del 
 const prNumber = process.env.GITHUB_REF.split('/')[2];
 const repoOwner = process.env.GITHUB_REPOSITORY.split('/')[0];
 const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
+
+// GraphQL client setup
+const graphQLClient = new GraphQLClient('https://api.github.com/graphql', {
+  headers: {
+    Authorization: `Bearer ${process.env.GITHUB_TOKEN}`
+  }
+});
+
+const GET_PROJECTS_QUERY = gql`
+  query($owner: String!, $repo: String!) {
+    repository(owner: $owner, name: $repo) {
+      projectsV2(first: 100) {
+        nodes {
+          id
+          name
+          columns(first: 100) {
+            nodes {
+              id
+              name
+              cards(first: 100) {
+                nodes {
+                  id
+                  content {
+                    ... on Issue {
+                      id
+                      url
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
 
 (async () => {
     try {
@@ -64,53 +102,33 @@ const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
         }
         const idealTime = parseInt(idealTimeMatch[1], 10);
 
-        console.log("Recupero la lista dei progetti...");
+        console.log("Recupero la lista dei progetti...", repoOwner, repoName, prNumber);
 
-        // Recupera il nome dello sprint dai Projects
-        const projects = await octokit.projects.listForRepo({
+        // Recupera il nome dello sprint dai Projects usando GraphQL
+        const data = await graphQLClient.request(GET_PROJECTS_QUERY, {
             owner: repoOwner,
             repo: repoName
         });
 
-        console.log("Progetti trovati:", projects.data);
-
         let sprintName = 'Nessuno sprint';
-        
-        try {
-            for (const project of projects.data) {
-                const columns = await octokit.projects.listColumns({
-                    project_id: project.id
-                });
-                console.log(`Progetto: ${project.name}`);
-                console.log(`Colonne:`, columns.data);
 
-                for (const column of columns.data) {
-                    try{
-                        console.log(`Verifico colonna: ${column.name}`);
-                        const cards = await octokit.projects.listCards({
-                            column_id: column.id
-                        });
-                        console.log("CARDS DATA");
-                        const card = cards.data.find(c => c.content_url && c.content_url.includes(`/issues/${issueId}`));
-                        console.log(card.content_url);
-                        console.log(cards.data);
-                        
+        // Analizza i progetti e le colonne per trovare quella associata all'issue
+        for (const project of data.repository.projectsV2.nodes) {
+            console.log(`Progetto: ${project.name}`);
 
-                        if (card) {
-                            sprintName = project.name;
-                            break;
-                        }
-                    } catch (err) {
-                        console.log(`Errore nel recuperare le card della colonna ${column.name}:`);
-                        console.error(`Errore nel recuperare le card della colonna ${column.name}:`, err);
+            for (const column of project.columns.nodes) {
+                console.log(`Colonna: ${column.name}`);
+                for (const card of column.cards.nodes) {
+                    const cardIssue = card.content;
+                    if (cardIssue && cardIssue.url && cardIssue.url.includes(`/issues/${issueId}`)) {
+                        sprintName = project.name;
+                        break;
                     }
                 }
-
                 if (sprintName !== 'Nessuno sprint') break;
-            } 
-        } catch (err) {
-            console.log(`Errore nel recuperare le colonne del progetto ${project.name}:`);
-            console.error(`Errore nel recuperare le colonne del progetto ${project.name}:`, err);
+            }
+
+            if (sprintName !== 'Nessuno sprint') break;
         }
 
         // Recupera il contenuto del foglio
