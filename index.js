@@ -72,7 +72,7 @@ query($projectId: ID!){
 async function getProjectId() {
     const data = await graphQLClient.request(GET_PROJECT_ID_QUERY);
     console.log(JSON.stringify(data, null, 2));
-    return data.projectV2.id; // Restituisci l'ID del progetto
+    return data.user.projectV2.id; // Restituisci l'ID del progetto
 }
 
 (async () => {
