@@ -25,26 +25,19 @@ const graphQLClient = new GraphQLClient('https://api.github.com/graphql', {
 });
 
 const GET_PROJECTS_QUERY = gql`
-  query($owner: String!, $repo: String!) {
-    repository(owner: $owner, name: $repo) {
-      projectsV2(first: 100) {
-        nodes {
-          id
-          title
-          columns(first: 100) {
-            nodes {
-              id
-              name
-              cards(first: 100) {
-                nodes {
-                  id
-                  content {
-                    ... on Issue {
-                      id
-                      url
-                    }
-                  }
-                }
+query($owner: String!, $repo: String!) {
+  repository(owner: $owner, name: $repo) {
+    projectsV2(first: 100) {
+      nodes {
+        id
+        title
+        items(first: 100) {
+          nodes {
+            id
+            content {
+              ... on Issue {
+                id
+                url
               }
             }
           }
@@ -52,6 +45,7 @@ const GET_PROJECTS_QUERY = gql`
       }
     }
   }
+}
 `;
 
 (async () => {
@@ -116,18 +110,13 @@ const GET_PROJECTS_QUERY = gql`
         for (const project of data.repository.projectsV2.nodes) {
             console.log(`Progetto: ${project.name}`);
 
-            for (const column of project.columns.nodes) {
-                console.log(`Colonna: ${column.name}`);
-                for (const card of column.cards.nodes) {
-                    const cardIssue = card.content;
-                    if (cardIssue && cardIssue.url && cardIssue.url.includes(`/issues/${issueId}`)) {
-                        sprintName = project.name;
-                        break;
-                    }
+            for (const column of project.items.nodes) {
+                const cardIssue = item.content;
+                if (cardIssue && cardIssue.url && cardIssue.url.includes(`/issues/${issueId}`)) {
+                    sprintName = project.title;
+                    break;
                 }
-                if (sprintName !== 'Nessuno sprint') break;
             }
-
             if (sprintName !== 'Nessuno sprint') break;
         }
 
