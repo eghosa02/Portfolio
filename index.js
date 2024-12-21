@@ -117,30 +117,20 @@ query{
         console.log(JSON.stringify(data, null, 2));
 
         let sprintName = 'Nessuno sprint';
+        const project = data.repository.projectsV2.nodes[0];
 
-        for (const project of data.repository.projectsV2.nodes) {
-            console.log(`Progetto: ${project.title}`);
-        
-            // Ciclo attraverso i campi del progetto
-            for (const field of project.fields.nodes) {
-                if (field.configuration && field.configuration.iterations) {
-                    // Ciclo attraverso le iterazioni del campo di tipo IterationField
-                    for (const iteration of field.configuration.iterations) {
-                        console.log(`Iterazione trovata: ${iteration.title}`);
-        
-                        // Associare la sprint/iterazione alla issue se è presente
-                        if (iteration.id) {
-                            sprintName = iteration.title;
-                            break; // Uscire dal ciclo quando troviamo l'iterazione
-                        }
+        console.log(`Progetto: ${project.title}`);
+    
+        for (const field of project.fields.nodes) {
+            if (field.configuration && field.configuration.iterations) {
+                for (const iteration of field.configuration.iterations) {
+                    console.log(`Iterazione trovata: ${iteration.title}`);
+                    if (iteration.id) {
+                        sprintName = iteration.title;
+                        break;
                     }
                 }
-        
-                // Se troviamo un nome di sprint, usciamo dal ciclo del progetto
-                if (sprintName !== 'Nessuno sprint') break;
             }
-        
-            // Se un sprint è stato trovato, esci dal ciclo dei progetti
             if (sprintName !== 'Nessuno sprint') break;
         }
 
