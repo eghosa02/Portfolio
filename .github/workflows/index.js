@@ -25,7 +25,7 @@ const graphQLClient = new GraphQLClient('https://api.github.com/graphql', {
 //CAMBIARE IN ORGANIZZAZIONE CON ALT-F4-eng
 const GET_PROJECT_ID_QUERY = gql`
 query {
-  organization(login: "ALT-F4.eng"){   
+  user(login: "eghosa02"){   
   projectV2(number: 1) {
     id
     }
