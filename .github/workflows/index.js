@@ -25,7 +25,7 @@ const graphQLClient = new GraphQLClient('https://api.github.com/graphql', {
 //CAMBIARE IN ORGANIZZAZIONE CON ALT-F4-eng
 const GET_PROJECT_ID_QUERY = gql`
 query {
-  user(login: "eghosa02"){  
+  user(login: eghosa02"){   
   projectV2(number: 1) {
     id
     }
@@ -71,7 +71,7 @@ query($projectId: ID!){
 async function getProjectId() {
     const data = await graphQLClient.request(GET_PROJECT_ID_QUERY);
     console.log(JSON.stringify(data, null, 2));
-    return data.organization.projectV2.id;                              //DA CAMBIARE CON ORGANIZATION
+    return data.user.projectV2.id;                              //DA CAMBIARE CON ORGANIZATION
 }
 
 (async () => {
