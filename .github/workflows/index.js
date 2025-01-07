@@ -104,13 +104,13 @@ async function getProjectId() {
 
         const issueBody = issueResponse.data.body;
 
-        const roleMatch = issueBody.match(/## Ruolo\s+([a-zA-Z\s]+)/i);
+        const roleMatch = issueBody.match(/# Ruolo\s+([a-zA-Z\s]+)/i);
         if (!roleMatch) {
             throw new Error('Ruolo non trovato nella descrizione della issue.');
         }
         const role = roleMatch[1].trim();
 
-        const idealTimeMatch = issueBody.match(/## Ore preventivate\s*(\d+(\.\d+)?)/i);
+        const idealTimeMatch = issueBody.match(/# Ore preventivate\s*(\d+(\.\d+)?)/i);
         if (!idealTimeMatch) {
             throw new Error('Ore preventivate non trovate nella descrizione della issue.');
         }
